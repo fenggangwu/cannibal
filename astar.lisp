@@ -48,7 +48,17 @@
 			    (cadddr (car frontier)); path of the best cand
 			    (+ (caddar frontier) 1) ;g-value+1 for now node
 			    h) 
-		    (cdr frontier)))) 
+		    (cdr frontier))))
+;    (print 'new-frontier)
+;    (print new-frontier)
+;    (print 'two-parts)
+;    (print (expand (car frontier) 
+;			    goal
+;			    moves 
+;			    (cadddr (car frontier)); path of the best cand
+;			    (+ (caddar frontier) 1) ;g-value+1 for now node
+;			    h) )
+;    (print (cdr frontier))
 ;    (print (cadr frontier))
 ;    (print (list-length new-frontier))
     (format t "expanding ~D (f=~D) ~% ~D nodes expanded, ~D nodes in frontier  ~%~%" 
@@ -69,8 +79,10 @@
 ; returns: a list containing all the children
 (defun expand (node goal moves parents-path g-value h)
   (if (null moves)
+;      ((print 'null-moves) nil)
       nil
       (let ((new-state (funcall (car moves) (car node)) ) )
+;	(print new-state)
 	(cond ((not new-state) ; if we reach to a invalid point
 	       (expand node goal (cdr moves) 
 		       parents-path g-value h ))

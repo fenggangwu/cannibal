@@ -2,7 +2,7 @@
 ; the 4 possible moves between states
 ; return the state after move, or nil if the move is illegal
 (defun move-down (state)
-  (let ((copy-state (copy-list state)))
+  (let ((copy-state (deep-copy state)))
     (cond ((member 'E (car copy-state)) 
 	   (let ((pos (position 'E (car copy-state))))
 	      (setf (nth pos (car copy-state)) (nth pos (cadr copy-state)))
@@ -16,7 +16,7 @@
 	  (t nil))))
 
 (defun move-up (state)
-  (let ((copy-state (copy-list state)))
+  (let ((copy-state (deep-copy state)))
     (cond ((member 'E (car copy-state)) nil)
 	  ((member 'E (cadr copy-state))
 	   (let ((pos (position 'E (cadr copy-state))))
@@ -30,7 +30,7 @@
 	   copy-state))))
 
 (defun move-right (state)
-  (let ((copy-state (copy-list state)))
+  (let ((copy-state (deep-copy state)))
     (cond ((member 'E (car copy-state))
 	   (let ((pos (position 'E (car copy-state))))
 	     (cond ((= pos 0)
@@ -67,7 +67,7 @@
 
 
 (defun move-left (state)
-  (let ((copy-state (copy-list state)))
+  (let ((copy-state (deep-copy state)))
     (cond ((member 'E (car copy-state))
 	   (let ((pos (position 'E (car copy-state))))
 	     (cond ((= pos 0) nil)
@@ -124,3 +124,9 @@
 ;(astar start goal (list move-up move-down move-left move-right) h-8puzzle)
 
 ;(setparameter )
+
+;deep-copy a state
+(defun deep-copy (state)
+  (list (copy-list (car state)) 
+	(copy-list (cadr state)) 
+	(copy-list (caddr state))))
