@@ -121,7 +121,7 @@
 	((equal (car r1) (car r2)) (compare-row (cdr r1) (cdr r2)))
 	(t (+ 1 (compare-row (cdr r1) (cdr r2))))))
 
-;(astar start goal (list move-up move-down move-left move-right) h-8puzzle)
+;(astar start goal (list 'move-up 'move-down 'move-left 'move-right) h-8puzzle)
 
 ;(setparameter )
 

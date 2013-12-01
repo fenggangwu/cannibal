@@ -1,6 +1,8 @@
 
 ; structure usage => instead we use pure list to process
 ; a node will be a list that has the following format:
+
+
 ; node: (state f-value g-value path-from-start-to-here)
 
 
@@ -15,20 +17,29 @@
 ; a waste of time => solution, replace the same state with the one 
 ; having lower cost
 
+; frontier: the nodes to be expanded
+; visited list: the node visited, but not the frontiers
+; if node having the same state but lower f-value than 
+;    any visited or frontier, insert it to the frontier
+; if node having the same state but greater or equal f-value than
+;    any visited or frontier, discard this node
+
 (defun astar (start goal moves h)
 ;  (print moves)
   (astar-search (list (make-node start goal nil 0 h)) ; the frontier list
-		goal moves h))
+		goal moves h
+		nil)) ; the visited list
 
 
-(defun astar-search (frontier goal moves h) ;todo
+(defun astar-search (frontier goal moves h visited-list)
 ;  (format t "frontier ~D" (list-length froniter))
 ;  (format t "~{~a~^, ~}" frontier)
 ;  (print moves)
   (cond ((checkgoal frontier goal) 
 	 (reverse (cadddr (checkgoal frontier goal))))
-	(t (astar-search (expand-best-cand frontier goal moves h)
-			 goal moves h))))
+	(t (astar-search 
+	    (expand-best-cand frontier goal moves h visited-list)
+	    goal moves h visited-list))))
 
 ;eliminate duplicate
 ;reorder the nodes
@@ -39,8 +50,9 @@
 ; expand the best frontier to get new froniter
 ; assume the old frontier is sorted already
 ; frontier: the old frontier (sorted increasingly by f-value)
+; visited-list: the nodes astar been to (not including those in frontier)
 ; returns: the new frontier (sorted increasingly by f-value)
-(defun expand-best-cand (frontier goal moves h)
+(defun expand-best-cand (frontier goal moves h visited-list)
   (let ((new-frontier 
 	 (my-append (expand (car frontier) 
 			    goal
@@ -48,7 +60,8 @@
 			    (cadddr (car frontier)); path of the best cand
 			    (+ (caddar frontier) 1) ;g-value+1 for now node
 			    h) 
-		    (cdr frontier))))
+		    (cdr frontier)
+		    visited-list)))
 ;    (print 'new-frontier)
 ;    (print new-frontier)
 ;    (print 'two-parts)
@@ -71,6 +84,8 @@
 			    (+ (caddar frontier) 1) ;g-value+1 for now node
 			    h))
 	    (list-length new-frontier))
+    ;SIDE EFFECT: update visted-list, add the best cand into visited list
+    (setq visited-list (cons (car frontier) visited-list))
     (sort new-frontier #'< :key #'second)))
 
 ; expand node, collect all the children nodes in a list
@@ -116,25 +131,46 @@
 
 ; appending the newly expanded node to the existing frontier
 ; if two nodes are having the same state, keep the one having lower cost
-(defun my-append (new-nodes frontier)
+(defun my-append (new-nodes frontier visited-list)
   (cond ((null new-nodes) frontier)
 	(t
 ;	 (print (cdr new-nodes))
 ;	 (print (insert-node (car new-nodes) frontier))
 	 (my-append 
 	  (cdr new-nodes) 
-	  (insert-node (car new-nodes) frontier)))))
+	  (insert-node (car new-nodes) frontier visited-list)
+	  visited-list))))
+
+; if node has a state already in the visited-list 
+;      discard it if node has a higher or equal value
+; if node has a lower f-value
+;      insert to frontier and REMOVE the loser from the visited-list 
+; if not found
+;      insert to the frontier
+(defun insert-node (node frontier visited-list)
+  (let ((visited-node (car (member node visited-list 
+		 :test #'(lambda (a b) (equal (car a) (car b)))))))
+    (cond ((null visited-node) ; not found in visited-list
+	   (insert-node-to-frontier node frontier))
+	  ((< (cadr node) (cadr visited-node))  ;better condidate found
+	   (delete visited-node visited-list) ;SIDE EFFECT: delete old node
+	   (insert-node-to-frontier node frontier))
+	  (t frontier)))) ;if this node cannot beat visited nodes, discard
+	   
+      
+
 ; non-destroy function
 ; insert node to frontier
 ; if the new node have the same state with an old one, only keep the 
 ; one having the lower cost (f-value)
-(defun insert-node (node frontier)
-  (cond ((null frontier) (list node))
+(defun insert-node-to-frontier (node frontier)
+  (cond	((null frontier) (list node))
 	((equal (car node) (caar frontier)) 
 	 (if (< (cadr node) (cadar frontier))
 	     (cons node (cdr frontier))
 	     frontier))
-	(t (cons (car frontier) (insert-node node (cdr frontier))))))
+	(t (cons (car frontier) 
+		 (insert-node-to-frontier node (cdr frontier))))))
 
 
 ; heuristic function generator
