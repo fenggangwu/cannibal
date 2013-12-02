@@ -130,10 +130,6 @@
 	((equal (caar frontier) goal) (car frontier))
 	(t (checkgoal (cdr frontier) goal))))
 
-(defun h (state goal) 0)
-
-(defun h-cannibal (state goal)
-  (/ (+ (- (car state) (car goal) ) (- (cadr state) (cadr goal) )) 6))
 
 ; appending the newly expanded node to the existing frontier
 ; if two nodes are having the same state, keep the one having lower cost
@@ -197,14 +193,7 @@
 		 (insert-node-to-frontier node (cdr frontier))))))
 
 
-; heuristic function generator
-; boat-capacity:
-; return: a heuristic function with respect to the boat capacity
-(defun h-cannibal-gen (boat-capacity)
-  (lambda (state goal)
-    (/ (+ (- (car state) (car goal)) 
-	  (- (cadr state) (cadr goal))) 
-       boat-capacity)))
+
 
 ;(astar '(21 21 1) '(0 0 0) (generate-moves-max 6 21) (h-cannibal-gen 6))
 ;(astar '(28 28 1) '(0 0 0) (generate-moves-max 6 28) (h-cannibal-gen 6))
