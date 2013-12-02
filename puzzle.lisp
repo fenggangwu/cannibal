@@ -121,12 +121,11 @@
 	((equal (car r1) (car r2)) (compare-row (cdr r1) (cdr r2)))
 	(t (+ 1 (compare-row (cdr r1) (cdr r2))))))
 
-;(astar start goal (list 'move-up 'move-down 'move-left 'move-right) h-8puzzle)
-
-;(setparameter )
-
 ;deep-copy a state
 (defun deep-copy (state)
   (list (copy-list (car state)) 
 	(copy-list (cadr state)) 
 	(copy-list (caddr state))))
+
+
+; (astar '((E 1 3)(4 2 5)(7 8 6)) '((1 2 3)(4 5 6)(7 8 E)) (list 'move-up 'move-down 'move-left 'move-right) 'h-8puzzle)
