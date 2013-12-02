@@ -28,18 +28,22 @@
 ;  (print moves)
   (astar-search (list (make-node start goal nil 0 h)) ; the frontier list
 		goal moves h
-		nil)) ; the visited list
+		nil ; the visited list
+		1)) ; counter, the expanded nodes
 
-
-(defun astar-search (frontier goal moves h visited-list)
+(defun astar-search (frontier goal moves h visited-list expand-cntr)
 ;  (format t "frontier ~D" (list-length froniter))
 ;  (format t "~{~a~^, ~}" frontier)
 ;  (print moves)
   (cond ((checkgoal frontier goal) 
+	 (format t "Totally ~D nodes expanded" expand-cntr)
 	 (reverse (cadddr (checkgoal frontier goal))))
-	(t (astar-search 
-	    (expand-best-cand frontier goal moves h visited-list)
-	    goal moves h visited-list))))
+	(t 
+	 (let ((new-frontier 
+		(expand-best-cand frontier goal moves h visited-list)))
+	   (astar-search new-frontier goal moves h visited-list
+			 (+ expand-cntr (- (+ 1 (list-length new-frontier)) 
+					   (list-length frontier))))))))
 
 ;eliminate duplicate
 ;reorder the nodes
@@ -74,7 +78,7 @@
 ;    (print (cdr frontier))
 ;    (print (cadr frontier))
 ;    (print (list-length new-frontier))
-    (format t "expanding ~D (f=~D) ~% ~D nodes expanded, ~D nodes in frontier  ~%~%" 
+    (format t "expanding ~D (f=~D) ~% ~D nodes newly expanded, ~D nodes in frontier  ~%~%" 
 	    (caar frontier) 
 	    (cadar frontier) 
 	    (list-length (expand (car frontier) 
