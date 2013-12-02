@@ -38,7 +38,7 @@
 ;  (print moves)
   (let ((frontier (car been-list)) (visited-list (cadr been-list)))
     (cond ((null frontier)
-	   (format t "Infeasible puzzle! ~%")
+	   (format t "No solution! ~%")
 	   (format t "Totally ~D nodes expanded" expand-cntr))
 	  ((checkgoal frontier goal) 
 	   (format t "Totally ~D nodes expanded" expand-cntr)
@@ -73,6 +73,9 @@
 		       (+ (caddar frontier) 1) ;g-value+1 for now node
 		       h) 
 		      (list (cdr frontier) visited-list))))
+;      (format t "Before expanding~%")
+;      (format t "Frontier ~A~%" frontier)
+;      (format t "Visited-list ~A~%" visited-list)
       (format t "expanding ~D (f=~D) ~% ~D nodes newly expanded, ~D nodes in frontier  ~%~%" 
 	      (caar frontier) 
 	      (cadar frontier) 
@@ -84,8 +87,10 @@
 			    (+ (caddar frontier) 1) ;g-value+1 for now node
 			    h))
 	      (list-length (car new-been-list)))
+;      (format t "After expanding ~%")
+;      (format t "Frontier ~A~%" (car new-been-list))
+;      (format t "Visited-list ~A~%" (cadr new-been-list))
 					;SIDE EFFECT: update visted-list, add the best cand into visited list
-      (print 'before-list)
       (list (sort (car new-been-list) #'< :key #'second) 
 	    (cons (car frontier) visited-list)))))
 
@@ -134,13 +139,16 @@
 ; if two nodes are having the same state, keep the one having lower cost
 ; returns: a been list
 (defun my-append (new-nodes been-list)
-  (print 'stepin-my-append)
-  (let ((frontier (car been-list))(visitied-list (cadr been-list)))
-    (cond ((null new-nodes) (print 'null-clause) been-list)
-	  (t 
-	   (print 't-clause)
-	   (my-append (cdr new-nodes) 
-		      (insert-node (car new-nodes) been-list))))))
+;  (let ((frontier (car been-list)) (visited-list (cadr been-list)))
+;    (format t "frontier ~A" frontier)
+;    (format t "visited-list ~A" visited-list)
+  (cond ((null new-nodes)
+;	 (print 'null-clause) 
+	 been-list)
+	(t 
+;	 (print 't-clause)
+	 (my-append (cdr new-nodes) 
+		    (insert-node (car new-nodes) been-list)))))
   
 
 ; if node has a state already in the visited-list 
@@ -152,17 +160,24 @@
 
 ; need return a been-list
 (defun insert-node (node been-list)
+;  (format t "Node ~A ~%" node)
   (let ((frontier (car been-list))(visited-list (cdar been-list)))
+;    (format t "Frontier ~A~%" frontier)
+;    (format t "Visited-list ~A~%" visited-list)
     (let ((visited-node 
 	   (car (member node visited-list 
 			:test #'(lambda (a b) (equal (car a) (car b)))))))
       (cond ((null visited-node) ; not found in visited-list
+;	     (print 'null-clause)
 	     (list (insert-node-to-frontier node frontier)
 		   visited-list))
 	    ((< (cadr node) (cadr visited-node))  ;better condidate found
+;	     (print '<clause)
 	     (list (insert-node-to-frontier node frontier)
-		   (remove visited-node visited-list)) ;SIDE EFFECT: delete old node
-	     (t been-list)))))) ;if this node cannot beat visited nodes, discard
+		   (remove visited-node visited-list))) ;SIDE EFFECT: delete old node
+	    (t 
+;	     (print 't-clause) 
+	     been-list))))) ;if this node cannot beat visited nodes, discard
     
 
   	   
