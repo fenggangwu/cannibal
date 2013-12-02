@@ -26,24 +26,29 @@
 
 (defun astar (start goal moves h)
 ;  (print moves)
-  (astar-search (list (make-node start goal nil 0 h)) ; the frontier list
+  (astar-search (list ; the been-list
+		 (list (make-node start goal nil 0 h)) ; the frontier list
+		 nil) ; the visited-list
 		goal moves h
-		nil ; the visited list
 		1)) ; counter, the expanded nodes
 
-(defun astar-search (frontier goal moves h visited-list expand-cntr)
+(defun astar-search (been-list goal moves h expand-cntr)
 ;  (format t "frontier ~D" (list-length froniter))
 ;  (format t "~{~a~^, ~}" frontier)
 ;  (print moves)
-  (cond ((checkgoal frontier goal) 
-	 (format t "Totally ~D nodes expanded" expand-cntr)
-	 (reverse (cadddr (checkgoal frontier goal))))
-	(t 
-	 (let ((new-frontier 
-		(expand-best-cand frontier goal moves h visited-list)))
-	   (astar-search new-frontier goal moves h visited-list
-			 (+ expand-cntr (- (+ 1 (list-length new-frontier)) 
-					   (list-length frontier))))))))
+  (let ((frontier (car been-list)) (visited-list (cadr been-list)))
+    (cond ((null frontier)
+	   (format t "Infeasible puzzle! ~%")
+	   (format t "Totally ~D nodes expanded" expand-cntr))
+	  ((checkgoal frontier goal) 
+	   (format t "Totally ~D nodes expanded" expand-cntr)
+	   (reverse (cadddr (checkgoal frontier goal))))
+	  (t 
+	   (let ((new-been-list (expand-best-cand been-list goal moves h)))
+	     (astar-search 
+	      new-been-list goal moves h
+	      (+ expand-cntr (- (+ 1 (list-length (car new-been-list))) 
+				(list-length frontier)))))))))
 
 ;eliminate duplicate
 ;reorder the nodes
@@ -55,42 +60,34 @@
 ; assume the old frontier is sorted already
 ; frontier: the old frontier (sorted increasingly by f-value)
 ; visited-list: the nodes astar been to (not including those in frontier)
-; returns: the new frontier (sorted increasingly by f-value)
-(defun expand-best-cand (frontier goal moves h visited-list)
-  (let ((new-frontier 
-	 (my-append (expand (car frontier) 
-			    goal
-			    moves 
-			    (cadddr (car frontier)); path of the best cand
-			    (+ (caddar frontier) 1) ;g-value+1 for now node
-			    h) 
-		    (cdr frontier)
-		    visited-list)))
-;    (print 'new-frontier)
-;    (print new-frontier)
-;    (print 'two-parts)
-;    (print (expand (car frontier) 
-;			    goal
-;			    moves 
-;			    (cadddr (car frontier)); path of the best cand
-;			    (+ (caddar frontier) 1) ;g-value+1 for now node
-;			    h) )
-;    (print (cdr frontier))
-;    (print (cadr frontier))
-;    (print (list-length new-frontier))
-    (format t "expanding ~D (f=~D) ~% ~D nodes newly expanded, ~D nodes in frontier  ~%~%" 
-	    (caar frontier) 
-	    (cadar frontier) 
-	    (list-length (expand (car frontier) 
+; returns: the been-list new frontier (sorted increasingly by f-value)
+(defun expand-best-cand (been-list goal moves h)
+  (let ((frontier (car been-list))(visited-list (cadr been-list)))
+    (format t "~%visited list length ~D~%" (list-length visited-list))
+    (let ((new-been-list
+	   (my-append (expand 
+		       (car frontier) 
+		       goal
+		       moves 
+		       (cadddr (car frontier)); path of the best cand
+		       (+ (caddar frontier) 1) ;g-value+1 for now node
+		       h) 
+		      (list (cdr frontier) visited-list))))
+      (format t "expanding ~D (f=~D) ~% ~D nodes newly expanded, ~D nodes in frontier  ~%~%" 
+	      (caar frontier) 
+	      (cadar frontier) 
+	      (list-length (expand 
+			    (car frontier) 
 			    goal
 			    moves 
 			    (cadddr (car frontier)); path of the best cand
 			    (+ (caddar frontier) 1) ;g-value+1 for now node
 			    h))
-	    (list-length new-frontier))
-    ;SIDE EFFECT: update visted-list, add the best cand into visited list
-    (setq visited-list (cons (car frontier) visited-list))
-    (sort new-frontier #'< :key #'second)))
+	      (list-length (car new-been-list)))
+					;SIDE EFFECT: update visted-list, add the best cand into visited list
+      (print 'before-list)
+      (list (sort (car new-been-list) #'< :key #'second) 
+	    (cons (car frontier) visited-list)))))
 
 ; expand node, collect all the children nodes in a list
 ; eliminating the nodes that is already on its own path
@@ -131,19 +128,20 @@
 (defun h (state goal) 0)
 
 (defun h-cannibal (state goal)
-(/ (+ (- (car state) (car goal) ) (- (cadr state) (cadr goal) )) 6))
+  (/ (+ (- (car state) (car goal) ) (- (cadr state) (cadr goal) )) 6))
 
 ; appending the newly expanded node to the existing frontier
 ; if two nodes are having the same state, keep the one having lower cost
-(defun my-append (new-nodes frontier visited-list)
-  (cond ((null new-nodes) frontier)
-	(t
-;	 (print (cdr new-nodes))
-;	 (print (insert-node (car new-nodes) frontier))
-	 (my-append 
-	  (cdr new-nodes) 
-	  (insert-node (car new-nodes) frontier visited-list)
-	  visited-list))))
+; returns: a been list
+(defun my-append (new-nodes been-list)
+  (print 'stepin-my-append)
+  (let ((frontier (car been-list))(visitied-list (cadr been-list)))
+    (cond ((null new-nodes) (print 'null-clause) been-list)
+	  (t 
+	   (print 't-clause)
+	   (my-append (cdr new-nodes) 
+		      (insert-node (car new-nodes) been-list))))))
+  
 
 ; if node has a state already in the visited-list 
 ;      discard it if node has a higher or equal value
@@ -151,16 +149,23 @@
 ;      insert to frontier and REMOVE the loser from the visited-list 
 ; if not found
 ;      insert to the frontier
-(defun insert-node (node frontier visited-list)
-  (let ((visited-node (car (member node visited-list 
-		 :test #'(lambda (a b) (equal (car a) (car b)))))))
-    (cond ((null visited-node) ; not found in visited-list
-	   (insert-node-to-frontier node frontier))
-	  ((< (cadr node) (cadr visited-node))  ;better condidate found
-	   (delete visited-node visited-list) ;SIDE EFFECT: delete old node
-	   (insert-node-to-frontier node frontier))
-	  (t frontier)))) ;if this node cannot beat visited nodes, discard
-	   
+
+; need return a been-list
+(defun insert-node (node been-list)
+  (let ((frontier (car been-list))(visited-list (cdar been-list)))
+    (let ((visited-node 
+	   (car (member node visited-list 
+			:test #'(lambda (a b) (equal (car a) (car b)))))))
+      (cond ((null visited-node) ; not found in visited-list
+	     (list (insert-node-to-frontier node frontier)
+		   visited-list))
+	    ((< (cadr node) (cadr visited-node))  ;better condidate found
+	     (list (insert-node-to-frontier node frontier)
+		   (remove visited-node visited-list)) ;SIDE EFFECT: delete old node
+	     (t been-list)))))) ;if this node cannot beat visited nodes, discard
+    
+
+  	   
       
 
 ; non-destroy function
