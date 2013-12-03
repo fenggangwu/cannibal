@@ -128,7 +128,7 @@
 	(copy-list (caddr state))))
 
 
-(defun solve-8puzzle (start)
+(defun solve-puzzle (start)
   (if (detect-infeasible start)
       (format t "Infeasible puzzle")
       (astar start 
@@ -155,4 +155,6 @@
 ; (astar '((E 1 3)(4 2 5)(7 8 6)) '((1 2 3)(4 5 6)(7 8 E)) (list 'move-up 'move-down 'move-left 'move-right) 'h-8puzzle)
 
 
-; (solve-8puzzle '(( 1 6 3)(8 E 5)(4 7 2)))
+; (solve-puzzle '(( 1 6 3)(8 E 5)(4 2 7)))
+; (solve-puzzle '((4 2 3) (5 E 1) (8 6 7)))
+
