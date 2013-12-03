@@ -128,4 +128,31 @@
 	(copy-list (caddr state))))
 
 
+(defun solve-8puzzle (start)
+  (if (detect-infeasible start)
+      (format t "Infeasible puzzle")
+      (astar start 
+	     '((1 2 3) (4 5 6) (7 8 E)) 
+	     (list 'move-up 'move-down 'move-left 'move-right)
+	     'h-8puzzle)))
+
+; reference: http://www.cs.bham.ac.uk/~mdr/teaching/modules04/java2/TilesSolvability.html
+(defun detect-infeasible (start)
+  (oddp (count-list-inverse (remove 'E (append (car start) (cadr start) (caddr start))))))
+
+(defun count-list-inverse (l)
+  (if (null l)
+      0
+      (+ (count-inverse (car l) (cdr l))
+	 (count-list-inverse (cdr l)))))
+
+(defun count-inverse (e l)
+  (cond ((null l) 0)
+	((> e (car l)) (+ 1 (count-inverse e (cdr l))))
+	(t (count-inverse e (cdr l)))))
+
+
 ; (astar '((E 1 3)(4 2 5)(7 8 6)) '((1 2 3)(4 5 6)(7 8 E)) (list 'move-up 'move-down 'move-left 'move-right) 'h-8puzzle)
+
+
+; (solve-8puzzle '(( 1 6 3)(8 E 5)(4 7 2)))

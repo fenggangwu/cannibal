@@ -84,10 +84,19 @@
 (defun h-cannibal (state goal)
   (/ (+ (- (car state) (car goal) ) (- (cadr state) (cadr goal) )) 6))
 
+(defun solve-cannibal (people-num boat-capacity)
+  (astar (list people-num people-num 1) 
+	 '(0 0 0)
+	 (generate-moves-max boat-capacity people-num)
+	 (h-cannibal-gen boat-capacity)))
+
 ;(run-depth '(21 21 1) '(0 0 0) (generate-moves-max 6 21))
 ;(run-depth '(28 28 1) '(0 0 0) (generate-moves-max 6 28))
 
 
-
 ;(astar '(21 21 1) '(0 0 0) (generate-moves-max 6 21) (h-cannibal-gen 6))
 ;(astar '(28 28 1) '(0 0 0) (generate-moves-max 6 28) (h-cannibal-gen 6))
+
+;(solve-cannibal 3 2)
+;(solve-cannibal 26 6)
+;(solve-cannibal 28 6)
